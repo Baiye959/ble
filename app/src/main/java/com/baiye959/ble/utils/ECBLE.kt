@@ -222,41 +222,63 @@ object ECBLE {
     private var ecCharacteristicWrite: BluetoothGattCharacteristic? = null
 
     private val bluetoothGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
-        @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
-            Log.e("onConnectionStateChange", "status=$status|newState=$newState")
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                gatt.close()
-                if (connectFlag) {
-                    ecBLEConnectionStateChangeCallback(
-                        false, 10000, "onConnectionStateChange:$status|$newState"
-                    )
-                } else {
-                    connectCallback(
-                        false, 10000, "onConnectionStateChange:$status|$newState"
-                    )
-                }
-                connectFlag = false
-                return
-            }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                gatt.discoverServices()
-                connectCallback(true, 0, "")
-                ecBLEConnectionStateChangeCallback(true, 0, "")
-                connectFlag = true
-                return
-            }
-            if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                gatt.close()
-                if (connectFlag) {
-                    ecBLEConnectionStateChangeCallback(false, 0, "")
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    connectCallback(true, 0, "")
+                    ecBLEConnectionStateChangeCallback(true, 0, "")
+                    // 先请求 MTU，成功后再发现服务
+                    Thread {
+                        try {
+                            Thread.sleep(300)
+                            setMtu()
+                        } catch (ignored: Throwable) {
+                        }
+                    }.start()
+                    connectFlag = true
                 } else {
-                    connectCallback(false, 0, "")
+                    connectCallback(false, status, "连接失败")
                 }
-                connectFlag = false
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                ecBLEConnectionStateChangeCallback(false, status, "连接断开")
             }
         }
+//        @SuppressLint("MissingPermission")
+//        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+//            super.onConnectionStateChange(gatt, status, newState)
+//            Log.e("onConnectionStateChange", "status=$status|newState=$newState")
+//            if (status != BluetoothGatt.GATT_SUCCESS) {
+//                gatt.close()
+//                if (connectFlag) {
+//                    ecBLEConnectionStateChangeCallback(
+//                        false, 10000, "onConnectionStateChange:$status|$newState"
+//                    )
+//                } else {
+//                    connectCallback(
+//                        false, 10000, "onConnectionStateChange:$status|$newState"
+//                    )
+//                }
+//                connectFlag = false
+//                return
+//            }
+//            if (newState == BluetoothProfile.STATE_CONNECTED) {
+//                gatt.discoverServices()
+//                connectCallback(true, 0, "")
+//                ecBLEConnectionStateChangeCallback(true, 0, "")
+//                connectFlag = true
+//                return
+//            }
+//            if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+//                gatt.close()
+//                if (connectFlag) {
+//                    ecBLEConnectionStateChangeCallback(false, 0, "")
+//                } else {
+//                    connectCallback(false, 0, "")
+//                }
+//                connectFlag = false
+//            }
+//        }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             super.onServicesDiscovered(gatt, status)
@@ -321,14 +343,33 @@ object ECBLE {
             }
         }
 
+        @SuppressLint("MissingPermission")
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
             if (BluetoothGatt.GATT_SUCCESS == status) {
                 Log.e("BLEService", "onMtuChanged success MTU = $mtu")
+                // MTU 设置成功后发现服务
+                gatt.discoverServices()
             } else {
-                Log.e("BLEService", "onMtuChanged fail ")
+                Log.e("BLEService", "onMtuChanged fail")
+                // 如果 512 失败，尝试较小的值
+                Thread {
+                    try {
+                        Thread.sleep(300)
+                        bluetoothGatt?.requestMtu(247)
+                    } catch (ignored: Throwable) {
+                    }
+                }.start()
             }
         }
+//        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+//            super.onMtuChanged(gatt, mtu, status)
+//            if (BluetoothGatt.GATT_SUCCESS == status) {
+//                Log.e("BLEService", "onMtuChanged success MTU = $mtu")
+//            } else {
+//                Log.e("BLEService", "onMtuChanged fail ")
+//            }
+//        }
     }
 
     @SuppressLint("MissingPermission")
@@ -346,9 +387,16 @@ object ECBLE {
     @SuppressLint("MissingPermission")
     private fun setMtu() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            bluetoothGatt?.requestMtu(247)
+            // 先尝试最大值
+            bluetoothGatt?.requestMtu(512)
         }
     }
+//    @SuppressLint("MissingPermission")
+//    private fun setMtu() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            bluetoothGatt?.requestMtu(247)
+//        }
+//    }
 
     @SuppressLint("MissingPermission")
     fun closeBLEConnection() {

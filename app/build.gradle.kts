@@ -58,4 +58,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     // 权限处理库
     implementation(libs.easypermissions)
+    // json解析
+    implementation(libs.google.gson)
+    // icon图标
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
 }
