@@ -15,36 +15,51 @@ import com.baiye959.ble.data.command.Command
 import com.baiye959.ble.data.model.*
 
 @Composable
-fun DeviceStatusCard(status: DeviceStatus) {
+fun DeviceStatusCard(
+    status: DeviceStatus,
+    getCurrentFps: String = "0",
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            Icon(
-                imageVector = when (status) {
-                    DeviceStatus.Online -> Icons.Default.CheckCircle
-                    DeviceStatus.Offline -> Icons.Default.Error
-                    DeviceStatus.Connecting -> Icons.Default.Refresh
-                    DeviceStatus.Rejected -> Icons.Default.Cancel
-                },
-                contentDescription = null,
-                tint = when (status) {
-                    DeviceStatus.Online -> Color.Green
-                    DeviceStatus.Offline -> Color.Gray
-                    DeviceStatus.Connecting -> Color.Blue
-                    DeviceStatus.Rejected -> Color.Red
-                }
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "设备状态: ${status.name}",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = when (status) {
+                        DeviceStatus.Online -> Icons.Default.CheckCircle
+                        DeviceStatus.Offline -> Icons.Default.Cancel
+                        DeviceStatus.Connecting -> Icons.Default.Sync
+                        DeviceStatus.Rejected -> Icons.Default.Cancel
+                    },
+                    contentDescription = null,
+                    tint = when (status) {
+                        DeviceStatus.Online -> Color.Green
+                        DeviceStatus.Offline -> Color.Gray
+                        DeviceStatus.Connecting -> Color.Blue
+                        DeviceStatus.Rejected -> Color.Red
+                    }
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "设备状态: ${status.name}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            if (status == DeviceStatus.Online) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "当前帧率: ${getCurrentFps}fps",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.baiye959.ble.viewmodel
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -183,9 +184,10 @@ class DeviceViewModel : ViewModel() {
             when (it.action) {
                 ActionType.Connect -> handleConnectMessage(it)
                 ActionType.Check -> handleCheckMessage(it)
-                ActionType.Control -> {
-                    android.util.Log.d("ble-receive", "Handling control message")
-                    handleControlMessage(it)
+                ActionType.Control -> handleControlMessage(it)
+                ActionType.Status -> {
+                    Log.d("ble-receive", "这是一条状态信息")
+                    handleStatusMessage(it)
                 }
             }
         }
@@ -228,6 +230,22 @@ class DeviceViewModel : ViewModel() {
 
                 currentCommandFunction = null
                 _context = null
+            }
+        }
+    }
+
+    private fun handleStatusMessage(message: BleMessage) {
+        when (message.status) {
+            "get_current_fps" -> {
+                try {
+                    val fps = message.params["value"]?.toString() ?: "0"
+                    _deviceUiState.value = _deviceUiState.value.copy(
+                        getCurrentFps = fps
+                    )
+                    Log.i("ble-receive", "更新getCurrentFps为$fps")
+                } catch (e: Exception) {
+                    Log.e("DeviceViewModel", "Parse fps failed", e)
+                }
             }
         }
     }

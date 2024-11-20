@@ -88,7 +88,10 @@ fun UserScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        DeviceStatusCard(status = uiState.deviceStatus)
+        DeviceStatusCard(
+            status = uiState.deviceStatus,
+            getCurrentFps = uiState.getCurrentFps
+        )
 
         LazyColumn(
             modifier = Modifier.weight(1f)

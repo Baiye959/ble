@@ -12,7 +12,8 @@ enum class MessageType {
 enum class ActionType {
     Connect,    // 连接相关
     Check,      // 状态检查
-    Control;    // 控制命令
+    Control,    // 控制命令
+    Status;     // 状态数据
 
     companion object {
         fun fromString(value: String): ActionType? =

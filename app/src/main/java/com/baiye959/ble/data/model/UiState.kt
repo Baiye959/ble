@@ -9,6 +9,6 @@ enum class DeviceScreenMode {
 
 data class DeviceUiState(
     val deviceStatus: DeviceStatus = DeviceStatus.Offline,
-    val availableCommands: List<Command> = emptyList()
+    val availableCommands: List<Command> = emptyList(),
+    val getCurrentFps: String = "0"
 )
-
